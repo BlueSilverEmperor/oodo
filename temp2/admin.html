@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - Admin Dashboard</title>
+    <link rel="stylesheet" href="admin-style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar admin-sidebar">
+            <div class="logo">
+                <h2>Dayflow Admin</h2>
+            </div>
+            <nav class="menu">
+                <a href="admin.html" class="active">Dashboard</a>
+                <a href="admin-employees.html">Employee Directory</a>
+                <a href="admin-attendance.html">Company Attendance</a>
+                <a href="admin-leave.html">Leave Approvals</a>
+                <a href="#">Payroll Control</a>
+            </nav>
+        </aside>
+
+        <!-- Main Dashboard Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>HR Administrator Dashboard</h1>
+                
+                <div class="user-profile" style="position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px;" onclick="toggleProfileDropdown(event)">
+                    <span>Admin User</span>
+                    <div class="avatar admin-avatar">A</div>
+
+                    <!-- Hidden Dropdown Menu -->
+                    <div id="profileDropdown" style="display: none; position: absolute; top: 50px; right: 0; background: white; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 160px; z-index: 1000; overflow: hidden;">
+                        
+                        <a href="#" onclick="confirmAdminLogout(event)" style="display: block; padding: 12px 16px; color: #e74c3c; text-decoration: none; font-size: 0.9em; font-weight: bold; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#fadbd8'" onmouseout="this.style.backgroundColor='white'">
+                            Sign Out
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Pending Leave Approvals Section -->
+            <section class="dashboard-section">
+                <div class="section-header">
+                    <h2>Pending Leave Approvals</h2>
+                    <a href="#" class="view-all">View All Requests</a>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Leave Type</th>
+                                <th>Dates</th>
+                                <th>Remarks</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Jane Doe (EMP-002)</td>
+                                <td>Sick Leave</td>
+                                <td>Aug 24 - Aug 25</td>
+                                <td>Fever and cold</td>
+                                <td class="action-buttons">
+                                    <button class="btn approve-btn">Approve</button>
+                                    <button class="btn reject-btn">Reject</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>John Smith (EMP-005)</td>
+                                <td>Paid Leave</td>
+                                <td>Sep 01 - Sep 05</td>
+                                <td>Family vacation</td>
+                                <td class="action-buttons">
+                                    <button class="btn approve-btn">Approve</button>
+                                    <button class="btn reject-btn">Reject</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Employee List & Quick Switch -->
+            <section class="dashboard-section">
+                <div class="section-header">
+                    <h2>Employee List</h2>
+                    <input type="text" placeholder="Search employees..." class="search-bar">
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Today's Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Jane Doe</td>
+                                <td>Software Engineer</td>
+                                <td><span class="status absent">Absent</span></td>
+                                <td><button class="btn view-btn">View Profile</button></td>
+                            </tr>
+                            <tr>
+                                <td>John Smith</td>
+                                <td>Marketing Manager</td>
+                                <td><span class="status present">Present</span></td>
+                                <td><button class="btn view-btn">View Profile</button></td>
+                            </tr>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+    <script>
+        // Toggles the dropdown visibility
+        function toggleProfileDropdown(event) {
+            // This line stops the click from "bubbling" up to the window
+            event.stopPropagation(); 
+            
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        // Closes the dropdown if the user clicks anywhere else on the page
+        window.onclick = function() {
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown && dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function confirmAdminLogout(event) {
+            event.preventDefault(); 
+            
+            const userConfirmed = confirm("Are you sure you want to log out of the Admin Dashboard?");
+            if (userConfirmed) {
+                window.location.href = 'auth.html';
+            }
+        }
+    </script>
+</body>
+</html>
+</body>
+</html>
+</body>
+</html>
+</body>
+</html>

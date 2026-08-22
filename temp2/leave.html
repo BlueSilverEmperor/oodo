@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - Apply for Leave</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>Dayflow</h2>
+            </div>
+            <nav class="menu">
+                <a href="index.html">Dashboard</a>
+                <a href="profile.html">My Profile</a>
+                <a href="employee-attendance.html">Attendance</a>
+                <a href="leave.html" class="active">Leave Requests</a>
+                <a href="salary.html">Salary Details</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+            
+            <main class="main-content">
+            <header class="top-header">
+                <h1>Leave Request</h1>
+                
+                <!-- Employee Profile with Dropdown Trigger -->
+                <div class="user-profile" style="position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px;" onclick="toggleProfileDropdown(event)">
+                    <span>Welcome back, Shreyas</span>
+                    <div class="avatar">S</div>
+
+                    <!-- Hidden Dropdown Menu -->
+                    <div id="profileDropdown" style="display: none; position: absolute; top: 50px; right: 0; background: white; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 160px; z-index: 1000; overflow: hidden;">
+                        <a href="profile.html" style="display: block; padding: 12px 16px; color: #2c3e50; text-decoration: none; font-size: 0.9em; border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#f4f7f6'" onmouseout="this.style.backgroundColor='white'">
+                            View Profile
+                        </a>
+                        <a href="#" onclick="confirmEmployeeLogout(event)" style="display: block; padding: 12px 16px; color: #e74c3c; text-decoration: none; font-size: 0.9em; font-weight: bold; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#fadbd8'" onmouseout="this.style.backgroundColor='white'">
+                            Sign Out
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Leave Application Form -->
+            <section class="dashboard-section leave-form-section" style="margin-top: 0;">
+                <h2>Apply for Leave</h2>
+                <form class="custom-form">
+                    <div class="form-group">
+                        <label for="leave-type">Leave Type:</label>
+                        <select id="leave-type" name="leave-type">
+                            <option value="paid">Paid</option>
+                            <option value="sick">Sick</option>
+                            <option value="unpaid">Unpaid</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="start-date">Start Date:</label>
+                        <input type="date" id="start-date" name="start-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="end-date">End Date:</label>
+                        <input type="date" id="end-date" name="end-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="remarks">Remarks / Reason:</label>
+                        <textarea id="remarks" name="remarks" placeholder="Provide reason..." rows="4"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn submit-btn">Submit Request</button>
+                </form>
+            </section>
+
+        </main>
+    </div>
+    <script>
+        // Toggles the dropdown visibility
+        function toggleProfileDropdown(event) {
+            event.stopPropagation(); 
+            
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        // Closes the dropdown if the user clicks anywhere else on the page
+        window.onclick = function() {
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown && dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        // The secure employee logout function
+        function confirmEmployeeLogout(event) {
+            event.preventDefault(); 
+            
+            const userConfirmed = confirm("Are you sure you want to log out?");
+            if (userConfirmed) {
+                window.location.href = 'auth.html';
+            }
+        }
+    </script>
+</body>
+</html>
