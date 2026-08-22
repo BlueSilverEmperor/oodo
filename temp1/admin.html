@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - Admin Dashboard</title>
+    <link rel="stylesheet" href="admin-style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar admin-sidebar">
+            <div class="logo">
+                <h2>Dayflow Admin</h2>
+            </div>
+            <nav class="menu">
+                <a href="admin.html" class="active">Dashboard</a>
+                <a href="admin-employees.html">Employee Directory</a>
+                <a href="admin-attendance.html">Company Attendance</a>
+                <a href="admin-leave.html">Leave Approvals</a>
+                <a href="#">Payroll Control</a>
+            </nav>
+        </aside>
+
+        <!-- Main Dashboard Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>HR Administrator Dashboard</h1>
+                <div class="user-profile">
+                    <span>Admin User</span>
+                    <div class="avatar admin-avatar">A</div>
+                </div>
+            </header>
+
+            <!-- Pending Leave Approvals Section -->
+            <section class="dashboard-section">
+                <div class="section-header">
+                    <h2>Pending Leave Approvals</h2>
+                    <a href="#" class="view-all">View All Requests</a>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Leave Type</th>
+                                <th>Dates</th>
+                                <th>Remarks</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Jane Doe (EMP-002)</td>
+                                <td>Sick Leave</td>
+                                <td>Aug 24 - Aug 25</td>
+                                <td>Fever and cold</td>
+                                <td class="action-buttons">
+                                    <button class="btn approve-btn">Approve</button>
+                                    <button class="btn reject-btn">Reject</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>John Smith (EMP-005)</td>
+                                <td>Paid Leave</td>
+                                <td>Sep 01 - Sep 05</td>
+                                <td>Family vacation</td>
+                                <td class="action-buttons">
+                                    <button class="btn approve-btn">Approve</button>
+                                    <button class="btn reject-btn">Reject</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Employee List & Quick Switch -->
+            <section class="dashboard-section">
+                <div class="section-header">
+                    <h2>Employee Directory & Attendance</h2>
+                    <input type="text" placeholder="Search employees..." class="search-bar">
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Today's Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Jane Doe</td>
+                                <td>Software Engineer</td>
+                                <td><span class="status absent">Absent</span></td>
+                                <td><button class="btn view-btn">View Profile</button></td>
+                            </tr>
+                            <tr>
+                                <td>John Smith</td>
+                                <td>Marketing Manager</td>
+                                <td><span class="status present">Present</span></td>
+                                <td><button class="btn view-btn">View Profile</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</body>
+</html>
