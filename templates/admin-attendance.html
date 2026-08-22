@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - Company Attendance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin-style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar admin-sidebar">
+            <div class="logo">
+                <h2>Dayflow Admin</h2>
+            </div>
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">{{ (user_name[:1] if user_name else 'A').upper() }}</div>
+                <div class="sidebar-name">{{ user_name or 'Admin User' }}</div>
+            </div>
+            <nav class="menu">
+                <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('employees') }}">Employee Directory</a>
+                <a href="{{ url_for('profile_page') }}">My Profile</a>
+                <a href="{{ url_for('view_attendance', user_id=user_id, role='Admin') }}" class="active">Attendance</a>
+                <a href="{{ url_for('view_leaves', user_id=user_id, role='Admin') }}">Leave Requests</a>
+                <a href="{{ url_for('payroll') }}">Payroll</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <h1>Company Attendance</h1>
+                <div class="user-profile">
+                    <span>{{ user_name or 'Admin User' }}</span>
+                    <div class="avatar admin-avatar">{{ (user_name[:1] if user_name else 'A').upper() }}</div>
+                </div>
+            </header>
+
+            <section class="dashboard-section table-card">
+                <div class="section-header">
+                    <h2>Attendance Logs (Admin View)</h2>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Date</th>
+                                <th>Check-In Time</th>
+                                <th>Check-Out Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rec in records %}
+                            <tr>
+                                <td>{{ rec.first_name }} {{ rec.last_name }} ({{ rec.employee_id }})</td>
+                                <td>{{ rec.date }}</td>
+                                <td>{{ rec.check_in_time or '-' }}</td>
+                                <td>{{ rec.check_out_time or '-' }}</td>
+                                <td>
+                                    {% if rec.status == 'Present' %}
+                                        <span class="status present">Present</span>
+                                    {% else %}
+                                        <span class="status absent">Absent</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 20px;">No attendance records found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script>
+        (function () {
+            const stored = localStorage.getItem('dayflow-theme') || 'dark';
+            const theme = stored === 'light' ? 'light' : 'dark';
+            document.body.classList.add(theme === 'light' ? 'theme-light' : 'theme-dark');
+
+            const existing = document.querySelector('.theme-toggle');
+            if (!existing) {
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'theme-toggle';
+                toggle.setAttribute('aria-label', 'Toggle theme');
+                toggle.innerHTML = '<span>☀</span>';
+                const header = document.querySelector('.top-header');
+                if (header) header.appendChild(toggle);
+                const syncTheme = () => {
+                    const isLight = document.body.classList.contains('theme-light');
+                    toggle.innerHTML = isLight ? '<span>☾</span>' : '<span>☀</span>';
+                    localStorage.setItem('dayflow-theme', isLight ? 'light' : 'dark');
+                };
+                syncTheme();
+                toggle.addEventListener('click', () => {
+                    document.body.classList.toggle('theme-light');
+                    document.body.classList.toggle('theme-dark');
+                    syncTheme();
+                });
+            }
+        })();
+    </script>
+</body>
+</html>
