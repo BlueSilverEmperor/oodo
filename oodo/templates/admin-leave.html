@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - Leave Approvals</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin-style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar admin-sidebar">
+            <div class="logo">
+                <h2>Dayflow Admin</h2>
+            </div>
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">{{ (user_name[:1] if user_name else 'A').upper() }}</div>
+                <div class="sidebar-name">{{ user_name or 'Admin User' }}</div>
+            </div>
+            <nav class="menu">
+                <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('employees') }}">Employee Directory</a>
+                <a href="{{ url_for('profile_page') }}">My Profile</a>
+                <a href="{{ url_for('view_attendance', user_id=user_id, role='Admin') }}">Attendance</a>
+                <a href="{{ url_for('view_leaves', user_id=user_id, role='Admin') }}" class="active">Leave Requests</a>
+                <a href="{{ url_for('payroll') }}">Payroll</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <h1>Leave Approvals</h1>
+                <div class="user-profile">
+                    <span>{{ user_name or 'Admin User' }}</span>
+                    <div class="avatar admin-avatar">{{ (user_name[:1] if user_name else 'A').upper() }}</div>
+                </div>
+            </header>
+
+            <section class="dashboard-section table-card">
+                <div class="section-header">
+                    <h2>Pending Leave Requests</h2>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="leave-requests-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Leave Type</th>
+                                <th>Dates</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for leave in leaves %}
+                            <tr>
+                                <td>{{ leave.first_name }} {{ leave.last_name }} ({{ leave.employee_id }})</td>
+                                <td>{{ leave.leave_type }}</td>
+                                <td>{{ leave.start_date }} to {{ leave.end_date }}</td>
+                                <td>{{ leave.remarks }}</td>
+                                <td>
+                                    {% if leave.status == 'Pending' %}
+                                        <span class="status pending" style="background-color: #f39c12;">Pending</span>
+                                    {% elif leave.status == 'Approved' %}
+                                        <span class="status present">Approved</span>
+                                    {% else %}
+                                        <span class="status absent">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td class="action-buttons">
+                                    {% if leave.status == 'Pending' %}
+                                    <form action="{{ url_for('handle_update_leave', leave_id=leave.leave_id) }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="status" value="Approved">
+                                        <input type="hidden" name="admin_comments" value="Approved by admin">
+                                        <button type="submit" class="btn approve-btn">Approve</button>
+                                    </form>
+                                    <form action="{{ url_for('handle_update_leave', leave_id=leave.leave_id) }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="status" value="Rejected">
+                                        <input type="hidden" name="admin_comments" value="Rejected by admin">
+                                        <button type="submit" class="btn reject-btn">Reject</button>
+                                    </form>
+                                    {% else %}
+                                    <span style="color:#7f8c8d;">Processed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding:20px; color:#7f8c8d;">No leave requests found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

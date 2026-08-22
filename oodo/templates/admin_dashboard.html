@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin-style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>Dayflow Admin</h2>
+            </div>
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">{{ (user_name[:1] if user_name else 'A').upper() }}</div>
+                <div class="sidebar-name">{{ user_name or 'Admin User' }}</div>
+            </div>
+            <nav class="menu">
+                <a href="#" class="active">Dashboard</a>
+                <a href="{{ url_for('employees') }}">Employee Directory</a>
+                <a href="{{ url_for('profile_page') }}">My Profile</a>
+                <a href="{{ url_for('view_attendance', user_id=user_id, role=role) }}">Attendance</a>
+                <a href="{{ url_for('view_leaves', user_id=user_id, role='Admin') }}">Leave Requests</a>
+                <a href="{{ url_for('payroll') }}">Payroll</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <h1>Admin Dashboard</h1>
+                <div class="user-profile">
+                    <span>Welcome back, {{ user_name }}</span>
+                    <div class="avatar">{{ user_name[0].upper() if user_name else 'A' }}</div>
+                </div>
+            </header>
+
+            <section class="quick-access">
+                <div class="card">
+                    <h3>Profile</h3>
+                    <p>Review personal account and employee data.</p>
+                    <button class="card-btn" onclick="window.location.href='{{ url_for('profile_page') }}'">View Profile</button>
+                </div>
+
+                <div class="card">
+                    <h3>Attendance</h3>
+                    <p>Monitor employee attendance and check-ins.</p>
+                    <button class="card-btn" onclick="window.location.href='{{ url_for('view_attendance', user_id=user_id, role='Admin') }}'">Open Attendance</button>
+                </div>
+
+                <div class="card">
+                    <h3>Leave Requests</h3>
+                    <p>Review and approve pending team leave requests.</p>
+                    <button class="card-btn" onclick="window.location.href='{{ url_for('view_leaves', user_id=user_id, role='Admin') }}'">Review Leaves</button>
+                </div>
+
+                <div class="card">
+                    <h3>Payroll</h3>
+                    <p>Manage salaries, add employees, and update payroll.</p>
+                    <button class="card-btn" onclick="window.location.href='{{ url_for('payroll') }}'">Open Payroll</button>
+                </div>
+
+                <div class="card logout-card">
+                    <h3>Logout</h3>
+                    <p>Securely end your admin session.</p>
+                    <button class="card-btn logout-btn" onclick="window.location.href='{{ url_for('logout') }}'">Sign Out</button>
+                </div>
+            </section>
+
+            <section class="recent-activity">
+                <h2>HR Activity & Alerts</h2>
+                <div id="activity-list" class="activity-list">
+                    {% for item in activity_items %}
+                    <div class="activity-item">
+                        <span class="status {{ item.badge_class }}">{{ item.label }}</span>
+                        <p>{{ item.text }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function renderActivities(items) {
+            const list = document.getElementById('activity-list');
+            if (!list) return;
+
+            list.innerHTML = '';
+            if (!items || items.length === 0) {
+                list.innerHTML = '<div class="activity-item"><span class="status approved">Updated</span><p>No recent HR activity.</p></div>';
+                return;
+            }
+
+            items.forEach((item) => {
+                const row = document.createElement('div');
+                row.className = 'activity-item';
+                row.innerHTML = `<span class="status ${item.badge_class}">${item.label}</span><p>${item.text}</p>`;
+                list.appendChild(row);
+            });
+        }
+
+        async function refreshActivity() {
+            try {
+                const response = await fetch('{{ url_for("admin_dashboard_activity") }}');
+                const result = await response.json();
+                renderActivities(result.activities || []);
+            } catch (error) {
+                console.error('Activity refresh failed:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            refreshActivity();
+            setInterval(refreshActivity, 15000);
+        });
+    </script>
+</body>
+</html>
