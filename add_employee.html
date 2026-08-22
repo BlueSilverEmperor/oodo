@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow - Add Employee</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 760px;
+            margin: 40px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .employee-id-box {
+            background: #eef2ff;
+            color: #3730a3;
+            padding: 13px;
+            border-radius: 8px;
+            margin-bottom: 22px;
+            font-weight: 600;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button,
+        .cancel {
+            padding: 12px 18px;
+            border-radius: 8px;
+            border: none;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .cancel {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .alert {
+            margin-bottom: 18px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        @media (max-width: 650px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full {
+                grid-column: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>Add Employee</h1>
+
+        <div class="employee-id-box">
+            Employee ID will be automatically assigned as:
+            {{ next_employee_id }}
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+
+            <div class="grid">
+
+                <div>
+                    <label>First Name</label>
+                    <input type="text" name="first_name" required>
+                </div>
+
+                <div>
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" required>
+                </div>
+
+                <div class="full">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+
+                <div>
+                    <label>Phone</label>
+                    <input type="text" name="phone">
+                </div>
+
+                <div>
+                    <label>Department</label>
+                    <input type="text" name="department">
+                </div>
+
+                <div>
+                    <label>Job Title</label>
+                    <input type="text" name="job_title">
+                </div>
+
+                <div>
+                    <label>Salary</label>
+                    <input
+                        type="number"
+                        name="salary"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                    >
+                </div>
+
+                <div>
+                    <label>Role</label>
+
+                    <select name="role">
+                        <option value="Employee">Employee</option>
+                        <option value="Admin">Admin / HR</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Temporary Password</label>
+
+                    <input
+                        type="password"
+                        name="password"
+                        minlength="8"
+                        required
+                    >
+                </div>
+
+                <div class="full">
+                    <label>Address</label>
+                    <textarea name="address"></textarea>
+                </div>
+
+            </div>
+
+            <div class="buttons">
+
+                <button type="submit">
+                    Add Employee
+                </button>
+
+                <a class="cancel" href="/admin/employees">
+                    Cancel
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>
