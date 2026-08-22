@@ -1,0 +1,44 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: dayflow_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Sridhar1234$
+      MYSQL_DATABASE: dayflow
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pSridhar1234$"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    container_name: dayflow_web
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: Sridhar1234$
+      DB_NAME: dayflow
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: dayflow_tunnel
+    restart: always
+    command: tunnel --no-autoupdate --url http://web:5000
+    depends_on:
+      - web
+
+volumes:
+  db_data:
