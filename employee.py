@@ -1,1220 +1,300 @@
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash,
-    session
-)
-
-from werkzeug.security import generate_password_hash
-from database import get_db_connection
-
+from flask import render_template, request, redirect, url_for, flash, session
 import mysql.connector
+from werkzeug.security import generate_password_hash
 
 
-# =========================================================
-# BLUEPRINT
-# =========================================================
+def get_db_connection():
+    db_config = {
+        "host": "localhost",
+        "database": "dayflow",
+        "user": "root",
+        "password": "Sridhar1234$",
+    }
+    return mysql.connector.connect(**db_config)
 
-employee_bp = Blueprint(
-    "employee",
-    __name__
-)
-
-
-# =========================================================
-# SECURITY HELPERS
-# =========================================================
 
 def admin_required():
-
-    return (
-        "user_id" in session
-        and session.get("role") == "Admin"
-    )
+    return "user_id" in session and session.get("role") == "Admin"
 
 
 def employee_logged_in():
+    return "user_id" in session and session.get("role") == "Employee"
 
-    return (
-        "user_id" in session
-        and session.get("role") == "Employee"
-    )
-
-
-# =========================================================
-# AUTO GENERATE EMPLOYEE ID
-# =========================================================
 
 def generate_employee_id():
-
     conn = None
     cursor = None
-
     try:
-
         conn = get_db_connection()
-
-        cursor = conn.cursor(
-            buffered=True
-        )
-
+        cursor = conn.cursor(buffered=True)
         cursor.execute(
             """
-            SELECT MAX(
-                CAST(
-                    SUBSTRING(employee_id, 4)
-                    AS UNSIGNED
-                )
-            )
+            SELECT MAX(CAST(SUBSTRING(employee_id, 4) AS UNSIGNED))
             FROM users
             WHERE employee_id LIKE 'EMP%'
             """
         )
-
         result = cursor.fetchone()
-
-        last_number = (
-            int(result[0])
-            if result and result[0]
-            else 0
-        )
-
-        new_number = last_number + 1
-
-        return f"EMP{new_number:03d}"
-
+        last_number = int(result[0]) if result and result[0] else 0
+        return f"EMP{last_number + 1:03d}"
     except mysql.connector.Error as error:
-
-        print(
-            "EMPLOYEE ID ERROR:",
-            error
-        )
-
+        print("EMPLOYEE ID ERROR:", error)
         return "EMP001"
-
     finally:
-
         if cursor:
             cursor.close()
-
         if conn and conn.is_connected():
             conn.close()
 
 
-# =========================================================
-# ADMIN - EMPLOYEE LIST + SEARCH
-# =========================================================
-
-@employee_bp.route(
-    "/admin/employees"
-)
-def employees():
-
-    if not admin_required():
-
-        flash(
-            "Admin access required.",
-            "danger"
-        )
-
-        return redirect(
-            url_for("auth")
-        )
-
-
-    search = request.args.get(
-        "search",
-        ""
-    ).strip()
-
-
+def get_employee_list(search=""):
     conn = None
     cursor = None
-
-
     try:
-
         conn = get_db_connection()
-
-        cursor = conn.cursor(
-            buffered=True,
-            dictionary=True
-        )
-
-
+        cursor = conn.cursor(buffered=True, dictionary=True)
         if search:
-
-            search_value = (
-                f"%{search}%"
-            )
-
+            search_value = f"%{search}%"
             cursor.execute(
                 """
-                SELECT
-                    u.user_id,
-                    u.employee_id,
-                    u.email,
-                    u.role,
-                    u.is_email_verified,
-
-                    p.first_name,
-                    p.last_name,
-                    p.phone,
-                    p.department,
-                    p.job_title,
-                    p.salary_structure,
-                    p.profile_picture_url
-
+                SELECT u.user_id, u.employee_id, u.email, u.role, u.is_email_verified,
+                       p.first_name, p.last_name, p.phone, p.department, p.job_title,
+                       p.salary_structure, p.profile_picture_url
                 FROM users u
-
-                LEFT JOIN employee_profiles p
-                    ON u.user_id = p.user_id
-
-                WHERE
-                    u.employee_id LIKE %s
-                    OR u.email LIKE %s
-                    OR p.first_name LIKE %s
-                    OR p.last_name LIKE %s
-                    OR p.department LIKE %s
-                    OR p.job_title LIKE %s
-
+                LEFT JOIN employee_profiles p ON u.user_id = p.user_id
+                WHERE u.employee_id LIKE %s OR u.email LIKE %s OR p.first_name LIKE %s
+                  OR p.last_name LIKE %s OR p.department LIKE %s OR p.job_title LIKE %s
                 ORDER BY u.user_id DESC
                 """,
-                (
-                    search_value,
-                    search_value,
-                    search_value,
-                    search_value,
-                    search_value,
-                    search_value
-                )
+                (search_value, search_value, search_value, search_value, search_value, search_value),
             )
-
         else:
-
             cursor.execute(
                 """
-                SELECT
-                    u.user_id,
-                    u.employee_id,
-                    u.email,
-                    u.role,
-                    u.is_email_verified,
-
-                    p.first_name,
-                    p.last_name,
-                    p.phone,
-                    p.department,
-                    p.job_title,
-                    p.salary_structure,
-                    p.profile_picture_url
-
+                SELECT u.user_id, u.employee_id, u.email, u.role, u.is_email_verified,
+                       p.first_name, p.last_name, p.phone, p.department, p.job_title,
+                       p.salary_structure, p.profile_picture_url
                 FROM users u
-
-                LEFT JOIN employee_profiles p
-                    ON u.user_id = p.user_id
-
+                LEFT JOIN employee_profiles p ON u.user_id = p.user_id
                 ORDER BY u.user_id DESC
                 """
             )
-
-
-        employee_list = (
-            cursor.fetchall()
-        )
-
-
-        return render_template(
-            "employees.html",
-            employees=employee_list,
-            search=search
-        )
-
-
+        return cursor.fetchall()
     except mysql.connector.Error as error:
-
-        print(
-            "EMPLOYEE LIST ERROR:",
-            error
-        )
-
-        flash(
-            "Unable to load employees.",
-            "danger"
-        )
-
-        return redirect(
-            url_for(
-                "admin_dashboard"
-            )
-        )
-
-
+        print("EMPLOYEE LIST ERROR:", error)
+        return []
     finally:
-
         if cursor:
             cursor.close()
-
         if conn and conn.is_connected():
             conn.close()
 
 
-# =========================================================
-# ADMIN - ADD EMPLOYEE
-# =========================================================
-
-@employee_bp.route(
-    "/admin/employees/add",
-    methods=["GET", "POST"]
-)
-def add_employee():
-
-    if not admin_required():
-
-        flash(
-            "Admin access required.",
-            "danger"
-        )
-
-        return redirect(
-            url_for("auth")
-        )
-
-
-    if request.method == "POST":
-
-        first_name = request.form.get(
-            "first_name",
-            ""
-        ).strip()
-
-        last_name = request.form.get(
-            "last_name",
-            ""
-        ).strip()
-
-        email = request.form.get(
-            "email",
-            ""
-        ).strip().lower()
-
-        phone = request.form.get(
-            "phone",
-            ""
-        ).strip()
-
-        address = request.form.get(
-            "address",
-            ""
-        ).strip()
-
-        department = request.form.get(
-            "department",
-            ""
-        ).strip()
-
-        job_title = request.form.get(
-            "job_title",
-            ""
-        ).strip()
-
-        salary = request.form.get(
-            "salary",
-            "0"
-        ).strip()
-
-        role = request.form.get(
-            "role",
-            "Employee"
-        )
-
-        password = request.form.get(
-            "password",
-            ""
-        )
-
-
-        if (
-            not first_name
-            or not last_name
-            or not email
-            or not password
-        ):
-
-            flash(
-                "First name, last name, email and password are required.",
-                "danger"
-            )
-
-            return redirect(
-                url_for(
-                    "employee.add_employee"
-                )
-            )
-
-
-        if role not in [
-            "Admin",
-            "Employee"
-        ]:
-
-            flash(
-                "Invalid role.",
-                "danger"
-            )
-
-            return redirect(
-                url_for(
-                    "employee.add_employee"
-                )
-            )
-
-
-        if len(password) < 8:
-
-            flash(
-                "Password must be at least 8 characters.",
-                "danger"
-            )
-
-            return redirect(
-                url_for(
-                    "employee.add_employee"
-                )
-            )
-
-
-        try:
-
-            salary_value = float(
-                salary or 0
-            )
-
-        except ValueError:
-
-            flash(
-                "Salary must be a valid number.",
-                "danger"
-            )
-
-            return redirect(
-                url_for(
-                    "employee.add_employee"
-                )
-            )
-
-
-        conn = None
-        cursor = None
-
-
-        try:
-
-            conn = get_db_connection()
-
-            cursor = conn.cursor(
-                buffered=True,
-                dictionary=True
-            )
-
-
-            cursor.execute(
-                """
-                SELECT user_id
-                FROM users
-                WHERE email = %s
-                """,
-                (email,)
-            )
-
-
-            if cursor.fetchone():
-
-                flash(
-                    "Email already exists.",
-                    "danger"
-                )
-
-                return redirect(
-                    url_for(
-                        "employee.add_employee"
-                    )
-                )
-
-
-            employee_id = (
-                generate_employee_id()
-            )
-
-
-            password_hash = (
-                generate_password_hash(
-                    password
-                )
-            )
-
-
-            cursor.execute(
-                """
-                INSERT INTO users
-                (
-                    employee_id,
-                    email,
-                    password_hash,
-                    role,
-                    is_email_verified
-                )
-
-                VALUES (
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    TRUE
-                )
-                """,
-                (
-                    employee_id,
-                    email,
-                    password_hash,
-                    role
-                )
-            )
-
-
-            user_id = (
-                cursor.lastrowid
-            )
-
-
-            cursor.execute(
-                """
-                INSERT INTO employee_profiles
-                (
-                    user_id,
-                    first_name,
-                    last_name,
-                    phone,
-                    address,
-                    job_title,
-                    department,
-                    salary_structure
-                )
-
-                VALUES (
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s
-                )
-                """,
-                (
-                    user_id,
-                    first_name,
-                    last_name,
-                    phone,
-                    address,
-                    job_title,
-                    department,
-                    salary_value
-                )
-            )
-
-
-            conn.commit()
-
-
-            flash(
-                f"Employee {employee_id} created successfully.",
-                "success"
-            )
-
-
-            return redirect(
-                url_for(
-                    "employee.employees"
-                )
-            )
-
-
-        except mysql.connector.Error as error:
-
-            if conn:
-                conn.rollback()
-
-            print(
-                "ADD EMPLOYEE ERROR:",
-                error
-            )
-
-            flash(
-                "Unable to create employee.",
-                "danger"
-            )
-
-            return redirect(
-                url_for(
-                    "employee.add_employee"
-                )
-            )
-
-
-        finally:
-
-            if cursor:
-                cursor.close()
-
-            if conn and conn.is_connected():
-                conn.close()
-
-
-    next_employee_id = (
-        generate_employee_id()
-    )
-
-
-    return render_template(
-        "add_employee.html",
-        next_employee_id=next_employee_id
-    )
-
-
-# =========================================================
-# ADMIN - VIEW ONE EMPLOYEE
-# =========================================================
-
-@employee_bp.route(
-    "/admin/employees/<int:user_id>"
-)
-def employee_details(user_id):
-
-    if not admin_required():
-
-        flash(
-            "Admin access required.",
-            "danger"
-        )
-
-        return redirect(
-            url_for("auth")
-        )
-
-
+def get_employee_detail(user_id):
     conn = None
     cursor = None
-
-
     try:
-
         conn = get_db_connection()
-
-        cursor = conn.cursor(
-            buffered=True,
-            dictionary=True
-        )
-
-
+        cursor = conn.cursor(buffered=True, dictionary=True)
         cursor.execute(
             """
-            SELECT
-                u.user_id,
-                u.employee_id,
-                u.email,
-                u.role,
-                u.is_email_verified,
-                u.created_at,
-
-                p.profile_id,
-                p.first_name,
-                p.last_name,
-                p.phone,
-                p.address,
-                p.job_title,
-                p.department,
-                p.salary_structure,
-                p.profile_picture_url
-
+            SELECT u.user_id, u.employee_id, u.email, u.role, u.is_email_verified, u.created_at,
+                   p.profile_id, p.first_name, p.last_name, p.phone, p.address,
+                   p.job_title, p.department, p.salary_structure, p.profile_picture_url
             FROM users u
-
-            LEFT JOIN employee_profiles p
-                ON u.user_id = p.user_id
-
+            LEFT JOIN employee_profiles p ON u.user_id = p.user_id
             WHERE u.user_id = %s
             """,
-            (user_id,)
+            (user_id,),
         )
-
-
-        employee = (
-            cursor.fetchone()
-        )
-
-
-        if not employee:
-
-            flash(
-                "Employee not found.",
-                "danger"
-            )
-
-            return redirect(
-                url_for(
-                    "employee.employees"
-                )
-            )
-
-
-        return render_template(
-            "employee_details.html",
-            employee=employee
-        )
-
-
+        return cursor.fetchone()
     except mysql.connector.Error as error:
-
-        print(
-            "EMPLOYEE DETAILS ERROR:",
-            error
-        )
-
-        flash(
-            "Unable to load employee.",
-            "danger"
-        )
-
-        return redirect(
-            url_for(
-                "employee.employees"
-            )
-        )
-
-
+        print("EMPLOYEE DETAILS ERROR:", error)
+        return None
     finally:
-
         if cursor:
             cursor.close()
-
         if conn and conn.is_connected():
             conn.close()
 
 
-# =========================================================
-# ADMIN - EDIT EMPLOYEE
-# =========================================================
+def add_employee_record(data):
+    first_name = data.get("first_name", "").strip()
+    last_name = data.get("last_name", "").strip()
+    email = data.get("email", "").strip().lower()
+    phone = data.get("phone", "").strip()
+    address = data.get("address", "").strip()
+    department = data.get("department", "").strip()
+    job_title = data.get("job_title", "").strip()
+    salary = data.get("salary", "0").strip()
+    role = data.get("role", "Employee")
+    password = data.get("password", "")
 
-@employee_bp.route(
-    "/admin/employees/<int:user_id>/edit",
-    methods=["GET", "POST"]
-)
-def edit_employee(user_id):
+    if not first_name or not last_name or not email or not password:
+        return False, "First name, last name, email and password are required."
 
-    if not admin_required():
+    if role not in ["Admin", "Employee"]:
+        return False, "Invalid role."
 
-        flash(
-            "Admin access required.",
-            "danger"
-        )
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters."
 
-        return redirect(
-            url_for("auth")
-        )
-
+    try:
+        salary_value = float(salary or 0)
+    except ValueError:
+        return False, "Salary must be a valid number."
 
     conn = None
     cursor = None
-
-
     try:
-
         conn = get_db_connection()
+        cursor = conn.cursor(buffered=True, dictionary=True)
+        cursor.execute("SELECT user_id FROM users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            return False, "Email already exists."
 
-        cursor = conn.cursor(
-            buffered=True,
-            dictionary=True
-        )
-
-
-        if request.method == "POST":
-
-            first_name = request.form.get(
-                "first_name",
-                ""
-            ).strip()
-
-            last_name = request.form.get(
-                "last_name",
-                ""
-            ).strip()
-
-            email = request.form.get(
-                "email",
-                ""
-            ).strip().lower()
-
-            phone = request.form.get(
-                "phone",
-                ""
-            ).strip()
-
-            address = request.form.get(
-                "address",
-                ""
-            ).strip()
-
-            department = request.form.get(
-                "department",
-                ""
-            ).strip()
-
-            job_title = request.form.get(
-                "job_title",
-                ""
-            ).strip()
-
-            salary = request.form.get(
-                "salary",
-                "0"
-            ).strip()
-
-            role = request.form.get(
-                "role",
-                "Employee"
-            )
-
-
-            if (
-                not first_name
-                or not last_name
-                or not email
-            ):
-
-                flash(
-                    "Required fields are missing.",
-                    "danger"
-                )
-
-                return redirect(
-                    url_for(
-                        "employee.edit_employee",
-                        user_id=user_id
-                    )
-                )
-
-
-            try:
-
-                salary_value = float(
-                    salary or 0
-                )
-
-            except ValueError:
-
-                flash(
-                    "Invalid salary.",
-                    "danger"
-                )
-
-                return redirect(
-                    url_for(
-                        "employee.edit_employee",
-                        user_id=user_id
-                    )
-                )
-
-
-            cursor.execute(
-                """
-                SELECT user_id
-                FROM users
-                WHERE email = %s
-                AND user_id != %s
-                """,
-                (
-                    email,
-                    user_id
-                )
-            )
-
-
-            if cursor.fetchone():
-
-                flash(
-                    "Email already used by another employee.",
-                    "danger"
-                )
-
-                return redirect(
-                    url_for(
-                        "employee.edit_employee",
-                        user_id=user_id
-                    )
-                )
-
-
-            cursor.execute(
-                """
-                UPDATE users
-
-                SET
-                    email = %s,
-                    role = %s
-
-                WHERE user_id = %s
-                """,
-                (
-                    email,
-                    role,
-                    user_id
-                )
-            )
-
-
-            cursor.execute(
-                """
-                UPDATE employee_profiles
-
-                SET
-                    first_name = %s,
-                    last_name = %s,
-                    phone = %s,
-                    address = %s,
-                    job_title = %s,
-                    department = %s,
-                    salary_structure = %s
-
-                WHERE user_id = %s
-                """,
-                (
-                    first_name,
-                    last_name,
-                    phone,
-                    address,
-                    job_title,
-                    department,
-                    salary_value,
-                    user_id
-                )
-            )
-
-
-            conn.commit()
-
-
-            flash(
-                "Employee updated successfully.",
-                "success"
-            )
-
-
-            return redirect(
-                url_for(
-                    "employee.employee_details",
-                    user_id=user_id
-                )
-            )
-
-
+        employee_id = generate_employee_id()
+        password_hash = generate_password_hash(password)
         cursor.execute(
             """
-            SELECT
-                u.user_id,
-                u.employee_id,
-                u.email,
-                u.role,
-
-                p.first_name,
-                p.last_name,
-                p.phone,
-                p.address,
-                p.job_title,
-                p.department,
-                p.salary_structure
-
-            FROM users u
-
-            LEFT JOIN employee_profiles p
-                ON u.user_id = p.user_id
-
-            WHERE u.user_id = %s
+            INSERT INTO users (employee_id, email, password_hash, role, is_email_verified)
+            VALUES (%s, %s, %s, %s, TRUE)
             """,
-            (user_id,)
+            (employee_id, email, password_hash, role),
         )
-
-
-        employee = (
-            cursor.fetchone()
+        user_id = cursor.lastrowid
+        cursor.execute(
+            """
+            INSERT INTO employee_profiles
+            (user_id, first_name, last_name, phone, address, job_title, department, salary_structure)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (user_id, first_name, last_name, phone, address, job_title, department, salary_value),
         )
-
-
-        if not employee:
-
-            flash(
-                "Employee not found.",
-                "danger"
-            )
-
-            return redirect(
-                url_for(
-                    "employee.employees"
-                )
-            )
-
-
-        return render_template(
-            "edit_employee.html",
-            employee=employee
-        )
-
-
+        conn.commit()
+        return True, f"Employee {employee_id} created successfully."
     except mysql.connector.Error as error:
-
         if conn:
             conn.rollback()
-
-        print(
-            "EDIT EMPLOYEE ERROR:",
-            error
-        )
-
-        flash(
-            "Unable to update employee.",
-            "danger"
-        )
-
-        return redirect(
-            url_for(
-                "employee.employees"
-            )
-        )
-
-
+        print("ADD EMPLOYEE ERROR:", error)
+        return False, "Unable to create employee."
     finally:
-
         if cursor:
             cursor.close()
-
         if conn and conn.is_connected():
             conn.close()
 
 
-# =========================================================
-# ADMIN - DELETE EMPLOYEE
-# =========================================================
+def edit_employee_record(user_id, data):
+    first_name = data.get("first_name", "").strip()
+    last_name = data.get("last_name", "").strip()
+    email = data.get("email", "").strip().lower()
+    phone = data.get("phone", "").strip()
+    address = data.get("address", "").strip()
+    department = data.get("department", "").strip()
+    job_title = data.get("job_title", "").strip()
+    salary = data.get("salary", "0").strip()
+    role = data.get("role", "Employee")
 
-@employee_bp.route(
-    "/admin/employees/<int:user_id>/delete",
-    methods=["POST"]
-)
-def delete_employee(user_id):
+    if not first_name or not last_name or not email:
+        return False, "Required fields are missing."
 
-    if not admin_required():
-
-        flash(
-            "Admin access required.",
-            "danger"
-        )
-
-        return redirect(
-            url_for("auth")
-        )
-
-
-    if user_id == session.get(
-        "user_id"
-    ):
-
-        flash(
-            "You cannot delete your own account.",
-            "danger"
-        )
-
-        return redirect(
-            url_for(
-                "employee.employees"
-            )
-        )
-
+    try:
+        salary_value = float(salary or 0)
+    except ValueError:
+        return False, "Invalid salary."
 
     conn = None
     cursor = None
-
-
     try:
-
         conn = get_db_connection()
-
-        cursor = conn.cursor(
-            buffered=True
+        cursor = conn.cursor(buffered=True, dictionary=True)
+        cursor.execute(
+            "SELECT user_id FROM users WHERE email = %s AND user_id != %s",
+            (email, user_id),
         )
-
+        if cursor.fetchone():
+            return False, "Email already used by another employee."
 
         cursor.execute(
+            "UPDATE users SET email = %s, role = %s WHERE user_id = %s",
+            (email, role, user_id),
+        )
+        cursor.execute(
             """
-            DELETE FROM users
+            UPDATE employee_profiles
+            SET first_name = %s, last_name = %s, phone = %s, address = %s,
+                job_title = %s, department = %s, salary_structure = %s
             WHERE user_id = %s
             """,
-            (user_id,)
+            (first_name, last_name, phone, address, job_title, department, salary_value, user_id),
         )
-
-
-        if cursor.rowcount == 0:
-
-            flash(
-                "Employee not found.",
-                "danger"
-            )
-
-        else:
-
-            conn.commit()
-
-            flash(
-                "Employee deleted successfully.",
-                "success"
-            )
-
-
+        conn.commit()
+        return True, "Employee updated successfully."
     except mysql.connector.Error as error:
-
         if conn:
             conn.rollback()
-
-        print(
-            "DELETE EMPLOYEE ERROR:",
-            error
-        )
-
-        flash(
-            "Unable to delete employee.",
-            "danger"
-        )
-
-
+        print("EDIT EMPLOYEE ERROR:", error)
+        return False, "Unable to update employee."
     finally:
-
         if cursor:
             cursor.close()
-
         if conn and conn.is_connected():
             conn.close()
 
 
-    return redirect(
-        url_for(
-            "employee.employees"
-        )
-    )
-
-
-# =========================================================
-# EMPLOYEE - OWN PROFILE ONLY
-# =========================================================
-
-@employee_bp.route(
-    "/employee/profile"
-)
-def my_profile():
-
-    if not employee_logged_in():
-
-        flash(
-            "Employee login required.",
-            "danger"
-        )
-
-        return redirect(
-            url_for("auth")
-        )
-
-
-    # IMPORTANT:
-    # Employee's ID is taken ONLY from session.
-    # No user_id comes from URL.
-
-    user_id = session[
-        "user_id"
-    ]
-
+def delete_employee_record(user_id):
+    if user_id == session.get("user_id"):
+        return False, "You cannot delete your own account."
 
     conn = None
     cursor = None
-
-
     try:
-
         conn = get_db_connection()
+        cursor = conn.cursor(buffered=True)
+        cursor.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
+        if cursor.rowcount == 0:
+            return False, "Employee not found."
+        conn.commit()
+        return True, "Employee deleted successfully."
+    except mysql.connector.Error as error:
+        if conn:
+            conn.rollback()
+        print("DELETE EMPLOYEE ERROR:", error)
+        return False, "Unable to delete employee."
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
-        cursor = conn.cursor(
-            buffered=True,
-            dictionary=True
-        )
 
-
+def get_my_profile(user_id):
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(buffered=True, dictionary=True)
         cursor.execute(
             """
-            SELECT
-                p.first_name,
-                p.last_name,
-                p.phone,
-                p.address,
-                p.job_title,
-                p.department,
-                p.profile_picture_url
-
+            SELECT p.first_name, p.last_name, p.phone, p.address, p.job_title,
+                   p.department, p.profile_picture_url, p.salary_structure
             FROM employee_profiles p
-
             WHERE p.user_id = %s
             """,
-            (user_id,)
+            (user_id,),
         )
-
-
         profile = cursor.fetchone()
-
-
-        # If account exists but profile row doesn't,
-        # create a blank profile automatically.
-
         if not profile:
-
             cursor.execute(
                 """
                 INSERT INTO employee_profiles
-                (
-                    user_id,
-                    first_name,
-                    last_name,
-                    phone,
-                    address,
-                    job_title,
-                    department,
-                    profile_picture_url
-                )
-
-                VALUES (
-                    %s,
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    ''
-                )
+                (user_id, first_name, last_name, phone, address, job_title, department, profile_picture_url, salary_structure)
+                VALUES (%s, '', '', '', '', '', '', '', '')
                 """,
-                (user_id,)
+                (user_id,),
             )
-
             conn.commit()
-
-
             profile = {
                 "first_name": "",
                 "last_name": "",
@@ -1222,243 +302,179 @@ def my_profile():
                 "address": "",
                 "job_title": "",
                 "department": "",
-                "profile_picture_url": ""
+                "profile_picture_url": "",
+                "salary_structure": "",
             }
-
-
-        return render_template(
-            "my_profile.html",
-            profile=profile
-        )
-
-
+        return profile
     except mysql.connector.Error as error:
-
-        print(
-            "MY PROFILE ERROR:",
-            error
-        )
-
-        flash(
-            "Unable to load profile.",
-            "danger"
-        )
-
-        return redirect(
-            url_for(
-                "employee_dashboard"
-            )
-        )
-
-
+        print("MY PROFILE ERROR:", error)
+        return None
     finally:
-
         if cursor:
             cursor.close()
-
         if conn and conn.is_connected():
             conn.close()
 
 
-# =========================================================
-# EMPLOYEE - EDIT OWN PROFILE ONLY
-# =========================================================
-
-@employee_bp.route(
-    "/employee/profile/edit",
-    methods=["POST"]
-)
-def edit_my_profile():
-
-    if not employee_logged_in():
-
-        flash(
-            "Employee login required.",
-            "danger"
-        )
-
-        return redirect(
-            url_for("auth")
-        )
+def get_profile_full_name(user_id):
+    profile = get_my_profile(user_id)
+    if not profile:
+        return ""
+    first_name = (profile.get("first_name") or "").strip()
+    last_name = (profile.get("last_name") or "").strip()
+    full_name = " ".join(part for part in [first_name, last_name] if part)
+    return full_name or "User"
 
 
-    # THIS is what prevents editing
-    # another employee.
-    user_id = session[
-        "user_id"
-    ]
-
-
-    first_name = request.form.get(
-        "first_name",
-        ""
-    ).strip()
-
-    last_name = request.form.get(
-        "last_name",
-        ""
-    ).strip()
-
-    phone = request.form.get(
-        "phone",
-        ""
-    ).strip()
-
-    address = request.form.get(
-        "address",
-        ""
-    ).strip()
-
-    job_title = request.form.get(
-        "job_title",
-        ""
-    ).strip()
-
-    department = request.form.get(
-        "department",
-        ""
-    ).strip()
-
-    profile_picture_url = request.form.get(
-        "profile_picture_url",
-        ""
-    ).strip()
-
+def update_my_profile(user_id, data):
+    first_name = data.get("first_name", "").strip()
+    last_name = data.get("last_name", "").strip()
+    phone = data.get("phone", "").strip()
+    address = data.get("address", "").strip()
+    job_title = data.get("job_title", "").strip()
+    department = data.get("department", "").strip()
+    profile_picture_url = data.get("profile_picture_url", "").strip()
 
     conn = None
     cursor = None
-
-
     try:
-
         conn = get_db_connection()
-
-        cursor = conn.cursor(
-            buffered=True
-        )
-
-
-        cursor.execute(
-            """
-            SELECT profile_id
-            FROM employee_profiles
-            WHERE user_id = %s
-            """,
-            (user_id,)
-        )
-
-
-        existing_profile = (
-            cursor.fetchone()
-        )
-
-
+        cursor = conn.cursor(buffered=True)
+        cursor.execute("SELECT profile_id FROM employee_profiles WHERE user_id = %s", (user_id,))
+        existing_profile = cursor.fetchone()
         if existing_profile:
-
             cursor.execute(
                 """
                 UPDATE employee_profiles
-
-                SET
-                    first_name = %s,
-                    last_name = %s,
-                    phone = %s,
-                    address = %s,
-                    job_title = %s,
-                    department = %s,
-                    profile_picture_url = %s
-
+                SET first_name = %s, last_name = %s, phone = %s, address = %s,
+                    job_title = %s, department = %s, profile_picture_url = %s
                 WHERE user_id = %s
                 """,
-                (
-                    first_name,
-                    last_name,
-                    phone,
-                    address,
-                    job_title,
-                    department,
-                    profile_picture_url,
-                    user_id
-                )
+                (first_name, last_name, phone, address, job_title, department, profile_picture_url, user_id),
             )
-
-
         else:
-
             cursor.execute(
                 """
                 INSERT INTO employee_profiles
-                (
-                    user_id,
-                    first_name,
-                    last_name,
-                    phone,
-                    address,
-                    job_title,
-                    department,
-                    profile_picture_url
-                )
-
-                VALUES (
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s
-                )
+                (user_id, first_name, last_name, phone, address, job_title, department, profile_picture_url)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """,
-                (
-                    user_id,
-                    first_name,
-                    last_name,
-                    phone,
-                    address,
-                    job_title,
-                    department,
-                    profile_picture_url
-                )
+                (user_id, first_name, last_name, phone, address, job_title, department, profile_picture_url),
             )
-
-
         conn.commit()
-
-
-        flash(
-            "Your profile has been updated successfully.",
-            "success"
-        )
-
-
+        return True, "Your profile has been updated successfully."
     except mysql.connector.Error as error:
-
         if conn:
             conn.rollback()
-
-        print(
-            "PROFILE UPDATE ERROR:",
-            error
-        )
-
-        flash(
-            "Unable to update profile.",
-            "danger"
-        )
-
-
+        print("PROFILE UPDATE ERROR:", error)
+        return False, "Unable to update profile."
     finally:
-
         if cursor:
             cursor.close()
-
         if conn and conn.is_connected():
             conn.close()
 
 
-    return redirect(
-        url_for(
-            "employee.my_profile"
+def update_profile_name(user_id, first_name, last_name):
+    first_name = (first_name or "").strip()
+    last_name = (last_name or "").strip()
+    if not first_name and not last_name:
+        return False, "Name cannot be empty."
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(buffered=True)
+        cursor.execute(
+            """
+            SELECT profile_id FROM employee_profiles WHERE user_id = %s
+            """,
+            (user_id,),
         )
+        if cursor.fetchone():
+            cursor.execute(
+                "UPDATE employee_profiles SET first_name = %s, last_name = %s WHERE user_id = %s",
+                (first_name, last_name, user_id),
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO employee_profiles (user_id, first_name, last_name, phone, address, job_title, department, profile_picture_url) VALUES (%s, %s, %s, '', '', '', '', '')",
+                (user_id, first_name, last_name),
+            )
+        conn.commit()
+        return True, "Name updated successfully."
+    except mysql.connector.Error as error:
+        if conn:
+            conn.rollback()
+        print("PROFILE NAME UPDATE ERROR:", error)
+        return False, "Unable to update name."
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+
+def admin_employees_page(search=""):
+    if not admin_required():
+        flash("Admin access required.", "danger")
+        return redirect(url_for("auth"))
+    employee_list = get_employee_list(search)
+    return render_template("employees.html", employees=employee_list, search=search)
+
+
+def add_employee_form_page():
+    if not admin_required():
+        flash("Admin access required.", "danger")
+        return redirect(url_for("auth"))
+    return render_template("add_employee.html", next_employee_id=generate_employee_id())
+
+
+def employee_details_page(user_id):
+    if not admin_required():
+        flash("Admin access required.", "danger")
+        return redirect(url_for("auth"))
+    employee = get_employee_detail(user_id)
+    if not employee:
+        flash("Employee not found.", "danger")
+        return redirect(url_for("employees"))
+    return render_template("employee_details.html", employee=employee)
+
+
+def edit_employee_form_page(user_id):
+    if not admin_required():
+        flash("Admin access required.", "danger")
+        return redirect(url_for("auth"))
+    employee = get_employee_detail(user_id)
+    if not employee:
+        flash("Employee not found.", "danger")
+        return redirect(url_for("employees"))
+    return render_template("edit_employee.html", employee=employee)
+
+
+def my_profile_page():
+    if not employee_logged_in():
+        flash("Employee login required.", "danger")
+        return redirect(url_for("auth"))
+
+    user_id = session.get("user_id")
+    email = session.get("email") or ""
+    profile = get_my_profile(user_id)
+    if profile is None:
+        flash("Unable to load profile.", "danger")
+        return redirect(url_for("employee_dashboard"))
+
+    return render_template(
+        "profile.html",
+        user_name=get_profile_full_name(user_id),
+        email=email,
+        employee_id=session.get("employee_id"),
+        user_id=user_id,
+        role=session.get("role", "Employee"),
+        profile=profile,
     )
+
+
+def employees_route_page():
+    return admin_employees_page(request.args.get("search", "").strip())
