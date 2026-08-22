@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - My Attendance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <script>
+        (function () {
+            const stored = localStorage.getItem('dayflow-theme') || 'dark';
+            const theme = stored === 'light' ? 'light' : 'dark';
+            document.body.classList.add(theme === 'light' ? 'theme-light' : 'theme-dark');
+        })();
+    </script>
+    <div class="dashboard-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>Dayflow</h2>
+            </div>
+            <nav class="menu">
+                <a href="index.html">Dashboard</a>
+                <a href="#">My Profile</a>
+                <!-- The active class highlights this specific page -->
+                <a href="employee-attendance.html" class="active">Attendance</a>
+                <a href="leave.html">Leave Requests</a>
+                <a href="salary.html">Salary Details</a>
+            </nav>
+        </aside>
+
+        <!-- Main Dashboard Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>My Attendance</h1>
+                <div class="user-profile">
+                    <span>Welcome back, Shreyas</span>
+                    <div class="avatar">S</div>
+                </div>
+            </header>
+
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <!-- Daily Actions Card -->
+                <section class="dashboard-section action-card" style="margin-bottom: 0; padding: 24px; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px; font-size: 1.2em;">Daily Attendance Actions</h3>
+                    <div class="action-buttons" style="display: flex; gap: 15px;">
+                        <button class="btn check-in-btn" style="background-color: #2ecc71; color: white; padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Check In</button>
+                        <button class="btn check-out-btn" style="background-color: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Check Out</button>
+                    </div>
+                </section>
+
+                <!-- Employee Attendance Logs Table -->
+                <section class="dashboard-section table-card" style="margin-bottom: 0; padding: 24px; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div class="section-header" style="margin-bottom: 20px;">
+                        <h2 style="color: #2c3e50; font-size: 1.2em;">Attendance Logs (Employee View)</h2>
+                    </div>
+                    <div class="table-container" style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; background-color: #f9fbfd; color: #7f8c8d;">Date</th>
+                                    <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; background-color: #f9fbfd; color: #7f8c8d;">Check-In Time</th>
+                                    <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; background-color: #f9fbfd; color: #7f8c8d;">Check-Out Time</th>
+                                    <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; background-color: #f9fbfd; color: #7f8c8d;">Status</th>
+                                </tr>
+                            </thead>
+                            <!-- The tbody is empty here because your attendance.js script automatically fills it! -->
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                
+            </div>
+
+        </main>
+    </div>
+
+    
+    <script src="attendance.js"></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - Dashboard</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <script>
+        (function () {
+            const stored = localStorage.getItem('dayflow-theme') || 'dark';
+            const theme = stored === 'light' ? 'light' : 'dark';
+            document.body.classList.add(theme === 'light' ? 'theme-light' : 'theme-dark');
+        })();
+    </script>
+    <div class="dashboard-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>Dayflow</h2>
+            </div>
+            <nav class="menu">
+                <a href="#" class="active">Dashboard</a>
+                <a href="profile.html">My Profile</a>
+                <a href="#">Attendance</a>
+                <a href="leave.html">Leave Requests</a>
+                
+                <a href="salary.html">Salary Details</a>
+            </nav>
+        </aside>
+
+        <!-- Main Dashboard Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>Employee Dashboard</h1>
+                <div class="user-profile">
+                    <span>Welcome back, {{ user_name }}</span>
+                    <div class="avatar">{{ user_name[0].upper() if user_name else 'U' }}</div>
+                </div>
+            </header>
+
+            <!-- Quick Access Cards -->
+            <section class="quick-access">
+                <div class="card">
+                    <h3>Profile</h3>
+                    <p>View personal, job, and salary details</p>
+                    <button class="card-btn" onclick="window.location.href='{{ url_for('profile_page') }}'">View Profile</button>
+                </div>
+                <div class="card">
+                    <h3>Attendance</h3>
+                    <p>Track daily and weekly check-ins</p>
+                    <button class="card-btn" onclick="window.location.href='{{ url_for('view_attendance', user_id=user_id, role=role) }}'">Mark Attendance</button>
+                </div>
+                <div class="card">
+                    <h3>Leave Requests</h3>
+                    <p>Apply for Paid, Sick, or Unpaid leave</p>
+                    <button class="card-btn" onclick="window.location.href='{{ url_for('view_leaves', user_id=user_id, role=role) }}'">Apply Now</button>
+                </div>
+                <div class="card logout-card">
+                    <h3>Logout</h3>
+                    <p>Securely end your session</p>
+                    <button class="card-btn logout-btn" onclick="window.location.href='{{ url_for('logout') }}'">Sign Out</button>
+                </div>
+            </section>
+
+            <!-- Recent Activity Alerts -->
+            <section class="recent-activity">
+                <h2>Recent Activity & Alerts</h2>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <span class="status present">Present</span>
+                        <p>Checked in successfully at 09:00 AM today.</p>
+                    </div>
+                    <div class="activity-item">
+                        <span class="status approved">Approved</span>
+                        <p>Your sick leave request for Aug 20 was approved by HR.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,196 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Requests - Dayflow HRMS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin-style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>{{ 'Dayflow Admin' if role == 'Admin' else 'Dayflow' }}</h2>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">{{ (user_name[:1] if user_name else 'U').upper() }}</div>
+                <div class="sidebar-name">{{ user_name or 'User' }}</div>
+            </div>
+
+            <nav class="menu">
+                <a href="{{ url_for('admin_dashboard') if role == 'Admin' else url_for('employee_dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('profile_page') }}">My Profile</a>
+                <a href="{{ url_for('view_attendance', user_id=user_id, role=role) }}">Attendance</a>
+                <a href="{{ url_for('view_leaves', user_id=user_id, role=role) }}" class="active">Leave Requests</a>
+                {% if role == 'Admin' %}
+                <a href="{{ url_for('payroll') }}">Payroll</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <h1>{{ 'Leave Approvals' if role == 'Admin' else 'Leave Requests' }}</h1>
+                <div class="user-profile">
+                    <span>Welcome back, {{ user_name }}</span>
+                    <div class="avatar">{{ (user_name[0] if user_name else 'U').upper() }}</div>
+                </div>
+            </header>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert-message alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if role == 'Employee' %}
+            <section class="dashboard-section" style="padding: 24px 22px;">
+                <div class="section-header">
+                    <h2>Apply for Leave</h2>
+                </div>
+
+                <div class="leave-form-section">
+                    <form action="{{ url_for('handle_apply_leave') }}" method="POST" class="custom-form">
+                        <input type="hidden" name="user_id" value="{{ user_id }}">
+
+                        <div class="form-group">
+                            <label for="leave_type">Leave Type</label>
+                            <select id="leave_type" name="leave_type" required>
+                                <option value="Paid">Paid</option>
+                                <option value="Sick">Sick</option>
+                                <option value="Unpaid">Unpaid</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="start_date">Start Date</label>
+                            <input id="start_date" type="date" name="start_date" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="end_date">End Date</label>
+                            <input id="end_date" type="date" name="end_date" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="remarks">Remarks / Reason</label>
+                            <textarea id="remarks" name="remarks" rows="3" placeholder="Provide reason..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Submit Request</button>
+                    </form>
+                </div>
+            </section>
+            {% endif %}
+
+            <section class="dashboard-section table-card">
+                <div class="section-header">
+                    <h2>{{ 'My Leave Requests' if role == 'Employee' else 'Leave Requests Tracker' }}</h2>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                {% if role == 'Admin' %}
+                                <th>Employee</th>
+                                {% endif %}
+                                <th>Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Remarks</th>
+                                <th>Status</th>
+                                {% if role == 'Admin' %}
+                                <th>Actions</th>
+                                {% else %}
+                                <th>Admin Comments</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for leave in leaves %}
+                            <tr>
+                                {% if role == 'Admin' %}
+                                <td>{{ leave.first_name }} {{ leave.last_name }} ({{ leave.employee_id }})</td>
+                                {% endif %}
+                                <td>{{ leave.leave_type }}</td>
+                                <td>{{ leave.start_date }}</td>
+                                <td>{{ leave.end_date }}</td>
+                                <td>{{ leave.remarks }}</td>
+                                <td>
+                                    {% if leave.status == 'Pending' %}
+                                        <span class="status pending">Pending</span>
+                                    {% elif leave.status == 'Approved' %}
+                                        <span class="status present">Approved</span>
+                                    {% else %}
+                                        <span class="status absent">Rejected</span>
+                                    {% endif %}
+                                </td>
+
+                                {% if role == 'Admin' %}
+                                <td class="action-buttons">
+                                    {% if leave.status == 'Pending' %}
+                                    <form action="{{ url_for('handle_update_leave', leave_id=leave.leave_id) }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="status" value="Approved">
+                                        <input type="hidden" name="admin_comments" value="Approved by admin">
+                                        <button type="submit" class="btn approve-btn">Approve</button>
+                                    </form>
+                                    <form action="{{ url_for('handle_update_leave', leave_id=leave.leave_id) }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="status" value="Rejected">
+                                        <input type="hidden" name="admin_comments" value="Rejected by admin">
+                                        <button type="submit" class="btn reject-btn">Reject</button>
+                                    </form>
+                                    {% else %}
+                                    <span style="color: var(--muted);">Processed</span>
+                                    {% endif %}
+                                </td>
+                                {% else %}
+                                <td>{{ leave.admin_comments or '-' }}</td>
+                                {% endif %}
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" style="text-align:center; padding:20px; color: var(--muted);">No leave requests found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script>
+        (function () {
+            const stored = localStorage.getItem('dayflow-theme') || 'dark';
+            const theme = stored === 'light' ? 'light' : 'dark';
+            document.body.classList.add(theme === 'light' ? 'theme-light' : 'theme-dark');
+
+            const existing = document.querySelector('.theme-toggle');
+            if (!existing) {
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'theme-toggle';
+                toggle.setAttribute('aria-label', 'Toggle theme');
+                toggle.innerHTML = '<span>☀</span>';
+                const header = document.querySelector('.top-header');
+                if (header) header.appendChild(toggle);
+                const syncTheme = () => {
+                    const isLight = document.body.classList.contains('theme-light');
+                    toggle.innerHTML = isLight ? '<span>☾</span>' : '<span>☀</span>';
+                    localStorage.setItem('dayflow-theme', isLight ? 'light' : 'dark');
+                };
+                syncTheme();
+                toggle.addEventListener('click', () => {
+                    document.body.classList.toggle('theme-light');
+                    document.body.classList.toggle('theme-dark');
+                    syncTheme();
+                });
+            }
+        })();
+    </script>
+</body>
+</html>
